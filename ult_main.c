@@ -7,9 +7,9 @@
 
 #include "led.h"
 
-#define TRIG 2
-#define ECHO 3
-#define ALARM 24
+#define TRIG 4
+#define ECHO 5
+#define ALARM 1
 
 pthread_mutex_t lock_ult;
 float ult_speed,ult_dis;
@@ -57,20 +57,20 @@ void *ult(void *arg)
 
 void *led_disp(void *arg)
 {
-	int speed;
+	int speed=1;
 	led_gpio_init();
 	while(1) {
 		pthread_mutex_lock(&lock_ult);
 		speed = (int)(ult_speed*1000);
 		pthread_mutex_unlock(&lock_ult);
 		led_display(speed);
-		delay(500);
+		
 	}
 }
 
 int main()
 {
-	int speed;
+	float speed;
 	wiringPiSetup();
 	pinMode(ALARM, OUTPUT);
 	pthread_t ult_data,ult_disp;
@@ -84,9 +84,9 @@ int main()
 		speed=ult_speed;
 		pthread_mutex_unlock(&lock_ult);
 		if(speed > alarm_speed)
-			digitalWrite(ALARM ,HIGH);
-		else
 			digitalWrite(ALARM, LOW);
+		else
+			digitalWrite(ALARM, HIGH);
 		delay(500);
 	}
 	return 0;

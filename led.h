@@ -1,9 +1,9 @@
 #ifndef LED_H
 #define LED_H
 
-#define SCLK 21
-#define RCLK 22
-#define LEDDATA 23
+#define SCLK 3
+#define RCLK 2
+#define LEDDATA 0
 
 typedef unsigned char uchar;
 

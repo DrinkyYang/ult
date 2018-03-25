@@ -37,7 +37,7 @@ void led_display(int ult_speed)
 		digitalWrite(RCLK, HIGH);
 		digitalWrite(RCLK, LOW);
 	}
-	led_out(led_tab[ult_speed%10] | 0x80);
+	led_out(led_tab[ult_speed%10] & 0x7f);
 	led_out(led_pos[i]);
 	ult_speed /= 10;
 	digitalWrite(RCLK, LOW);
