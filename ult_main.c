@@ -15,6 +15,7 @@
 pthread_mutex_t lock_ult;
 float ult_speed,ult_dis;
 float alarm_speed = 1;
+float max_disance = 5;
 
 void *ult(void *arg)
 {
@@ -43,7 +44,7 @@ void *ult(void *arg)
 		time_stop = t2.tv_sec * 1000000 + t2.tv_usec;
 		dis_temp = (float)(time_stop - time_start) /1000000 * 340 / 2;
 		
-		if(dis_temp < 10.0) {
+		if(dis_temp < max_distance) {
                         if(startglag) {
                                 dis_old = dis_new;
                                 time_old = time_new;
@@ -56,10 +57,10 @@ void *ult(void *arg)
                         pthread_mutex_lock(&lock_ult);
                         ult_dis = dis_new;
                         ult_speed = (fabs)(dis_new - dis_old) / ((float)(time_new - time_old) / 1000000);
-                        printf("dis:%f m, speed:%f m/s\n", ult_dis, ult_speed);
+                        //printf("dis:%f m, speed:%f m/s\n", ult_dis, ult_speed);
                         pthread_mutex_unlock(&lock_ult);
                 }
-		delay(500);
+		delay(200);
 	}
 }
 
@@ -79,21 +80,35 @@ int main()
 {
 	float speed;
 	bool phflag=0;
+	char buffer[100]={0};
+	int num_photos=0;
+	FILE *fp = NULL;
+	pthread_t ult_data,ult_disp;
+	
 	wiringPiSetup();
 	pinMode(ALARM, OUTPUT);
-	pthread_t ult_data,ult_disp;
 	pthread_create(&ult_data,NULL,ult,NULL);
 	pthread_create(&ult_disp,NULL,led_disp,NULL);
-	int i=0;
+	
 	while(1)
 	{
 		pthread_mutex_lock(&lock_ult);
 		speed=ult_speed;
+		distance=ult_dis;
 		pthread_mutex_unlock(&lock_ult);
+		
+		fp=fopen("/tmp/ult.conf", "r");
+		if(fp) {
+			fscanf(fp, "%f, %f", &max_distance, &speed_alarm);
+			fclose(fp);
+		}
+		
 		if(speed > alarm_speed) {
                         digitalWrite(ALARM, LOW);
                         if(!phflag) {
-                                system("raspistill -t 200 -o photo/$(date +%Y%m%d%H%M%S).jpg -w 640 -h 480");
+                                sprintf(buffer, "raspistill -t 200 -o /public/photos/photo-%d.jpeg -w 640 -h 480", num_photos++);
+				//system("raspistill -t 200 -o photo/$(date +%Y%m%d%H%M%S).jpg -w 640 -h 480");
+				system(buffer);
                                 phflag = 1;
                         }
                 }
@@ -101,6 +116,13 @@ int main()
                         digitalWrite(ALARM, HIGH);
                         phflag = 0;
                 }
+		
+		fp=fopen("/tmp/ult.log", "w");
+		if(fp) {
+			fprintf(fp, "%d, %d, %d", num_photos, distance, speed);
+			fclose(fp);
+		}
+		
 		delay(500);
 	}
 	return 0;
