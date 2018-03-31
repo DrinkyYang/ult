@@ -56,7 +56,7 @@ window.onload = function () {
         if (cur_photo_id > 0) {
             console.log("prev");
             cur_photo_id = cur_photo_id - 1;
-            updatePhotoDistance(cur_photo_id);
+            updatePhoto(cur_photo_id);
         }
     });
 
