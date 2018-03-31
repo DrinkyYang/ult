@@ -63,6 +63,18 @@ io.sockets.on('connection', function (socket) {
     var running = true;
     console.log("websocket connecting..");
 
+    socket.on("set", function(msg) {
+        console.log(msg);
+        var conf_str = msg["max_distance"] + ", " + msg["max_speed"];
+        fs.writeFile("/tmp/ult.conf", conf_str, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            console.log("The file was saved!");
+        });
+
+    });
+
     setInterval(function(){
         fs.readFile('/tmp/ult.log', 'utf8', function (err,data) {
             if (err) {
@@ -71,9 +83,10 @@ io.sockets.on('connection', function (socket) {
             var arr = data.split(",");
             console.log(arr);
             socket.emit("info", {num_photos: Number.parseInt(arr[0]),
-                                 distance: Number.parseInt(arr[1])});
+                                 distance: Number.parseInt(arr[1]),
+                                 speed: Number.parseInt(arr[2])
+                                });
         });
     }, 1000);
-
 
 });

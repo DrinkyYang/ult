@@ -3,8 +3,9 @@ window.onload = function () {
     var socket = io(loc.origin);
     var num_photos = 0;
     var cur_photo_id = 0;
-    var dps = []; // dataPoints
-    var chart = new CanvasJS.Chart("chartContainer", {
+    var distance_dps = []; // dataPoints
+    var speed_dps = []; // dataPoints
+    var distance_chart = new CanvasJS.Chart("DistancechartContainer", {
 	      title :{
 		        text: "Dynamic Distance"
 	      },
@@ -13,18 +14,35 @@ window.onload = function () {
 	      },
 	      data: [{
 		        type: "line",
-		        dataPoints: dps
+		        dataPoints: distance_dps
 	      }]
     });
+    var speed_chart = new CanvasJS.Chart("SpeedchartContainer", {
+	      title :{
+		        text: "Dynamic Speed"
+	      },
+	      axisY: {
+		        includeZero: false
+	      },
+	      data: [{
+		        type: "line",
+		        dataPoints: speed_dps
+	      }]
+    });
+
 
     var xVal = 0;
     var dataLength = 20; // number of dataPoints visible at any point
 
+	  distance_chart.render();
+	  speed_chart.render();
+
     socket.on('info', function (data) {
         console.log(data);
         var distance = data["distance"];
+        var speed = data["speed"];
         var n = data["num_photos"];
-        updateChart(distance);
+        updateChart(distance, speed);
         if (n > num_photos) {
             num_photos = n;
             updatePhoto(n);
@@ -38,7 +56,7 @@ window.onload = function () {
         if (cur_photo_id > 0) {
             console.log("prev");
             cur_photo_id = cur_photo_id - 1;
-            updatePhoto(cur_photo_id);
+            updatePhotoDistance(cur_photo_id);
         }
     });
 
@@ -52,6 +70,16 @@ window.onload = function () {
         }
     });
 
+
+    var set_button = document.getElementById('set-b');
+    set_button.addEventListener('click', function() {
+        var max_distance = document.getElementById('distance-conf').value;
+        var max_speed = document.getElementById('speed-conf').value;
+        console.log(max_distance);
+        console.log(max_speed);
+        socket.emit("set", {max_distance: max_distance, max_speed: max_speed});
+    });
+
     var updatePhoto = function(i) {
         //$("#img-holder").attr("src", get_photo_url(i));
         var new_url =  get_photo_url(i);
@@ -63,19 +91,25 @@ window.onload = function () {
         return "/photos/photo-" + i + ".jpeg";
     };
 
-    var updateChart = function (yVal) {
-		    dps.push({
+    var updateChart = function (distance, speed) {
+		    distance_dps.push({
 			      x: xVal,
-			      y: yVal
+			      y: distance
+		    });
+		    speed_dps.push({
+			      x: xVal,
+			      y: speed
 		    });
 
         xVal++;
 
-	      if (dps.length > dataLength) {
-		        dps.shift();
+	      if (distance_dps.length > dataLength) {
+		        distance_dps.shift();
+		        speed_dps.shift();
 	      }
 
-	      chart.render();
+	      distance_chart.render();
+	      speed_chart.render();
     };
 
 }

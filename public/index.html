@@ -14,7 +14,15 @@
         <button id="next-b">Next</button>
     </div>
     <div id="mchart">
-        <div id="chartContainer" style="height: 400px; width: 800px;"></div>
+        <div id="configuration">
+						<label for="distance-conf">Max Distance</label>
+            <input id="distance-conf" name="MaxDistance" type="text" value="100" ></input>
+						<label for="speed-conf">Max Speed</label>
+            <input id="speed-conf" name="MaxSpeed" type="text" value="100" ></input>
+            <button id="set-b">Set</button>
+        </div>
+        <div id="DistancechartContainer" style="height: 300px; width: 800px;"></div>
+        <div id="SpeedchartContainer" style="height: 300px; width: 800px;"></div>
     </div>
     </div>
 </body>
@@ -32,7 +40,6 @@
    }
    #mchart {
        margin: 20px;
-       margin-top: 70px;
        float:left;
    }
    #img-holder{

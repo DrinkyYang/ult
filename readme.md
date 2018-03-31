@@ -35,3 +35,8 @@ node app.js
 - 10.20.199.138 is the IP of your Pi. Please modify it to yours.
 
 
+# Setting
+- max distance and max speed
+- They were wrote in `/tmp/ult.conf` in format `%d, %d` (distance, speed).
+- Please read and update them in your C code periodically.
+

@@ -8,8 +8,9 @@ int main() {
   }
 
   int distance = 100; // current distance
+  int speed = 333; // current speed
   int num_photos = 1; // number of photos it recorded. start from 0.
-  fprintf(fp, "%d, %d", num_photos, distance);
+  fprintf(fp, "%d, %d, %d", num_photos, distance, speed);
 
   fclose(fp);
 
