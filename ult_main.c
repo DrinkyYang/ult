@@ -15,14 +15,18 @@
 pthread_mutex_t lock_ult;
 float ult_speed,ult_dis;
 float alarm_speed = 1;
-float max_disance = 5;
+float max_distance = 5;
+float min_distance = 0.5;
 
 void *ult(void *arg)
 {
 	struct timeval t1,t2;
-	long time_start, time_stop, time_old, time_new;
-	float dis_old, dis_new, dis_temp;
-	bool startflag=0;
+	long time_start, time_stop;
+	long time_old = 0;
+	long time_new = 0;
+	float dis_old = 0;
+	float dis_new = 0;
+	float dis_temp = 0;
 	pinMode(TRIG, OUTPUT);
 	pinMode(ECHO, INPUT);
 	while(1) {
@@ -31,12 +35,12 @@ void *ult(void *arg)
 		delayMicroseconds(15);
 		digitalWrite(TRIG, LOW);
 		while(1) {
-			if (digitalRead(ECHO) == 1)
+			if (digitalRead(ECHO))
 				break;
 		}
 		gettimeofday(&t1, NULL);
 		while(1) {
-			if(digitalRead(ECHO) == 0)
+			if (!digitalRead(ECHO))
 				break;
 		}
 		gettimeofday(&t2, NULL);
@@ -44,20 +48,16 @@ void *ult(void *arg)
 		time_stop = t2.tv_sec * 1000000 + t2.tv_usec;
 		dis_temp = (float)(time_stop - time_start) /1000000 * 340 / 2;
 		
-		if(dis_temp < max_distance) {
-                        if(startglag) {
-                                dis_old = dis_new;
-                                time_old = time_new;
-                        }
-                        else
-                                startflag = 1;
+		if((dis_temp < max_distance)&&(dis_temp > min_distance)) {
+                        dis_old = dis_new;
+                        time_old = time_new;
                         dis_new = dis_temp;
                         time_new = (time_stop - time_start)/2 + time_start;
                         
                         pthread_mutex_lock(&lock_ult);
                         ult_dis = dis_new;
                         ult_speed = (fabs)(dis_new - dis_old) / ((float)(time_new - time_old) / 1000000);
-                        //printf("dis:%f m, speed:%f m/s\n", ult_dis, ult_speed);
+                        printf("dis:%f m, speed:%f m/s\n", ult_dis, ult_speed);
                         pthread_mutex_unlock(&lock_ult);
                 }
 		delay(200);
@@ -67,10 +67,11 @@ void *ult(void *arg)
 void *led_disp(void *arg)
 {
 	int speed_disp;
+	int dot_mask = pow(10,DOTMASK);
 	led_gpio_init();
 	while(1) {
 		pthread_mutex_lock(&lock_ult);
-		speed_disp = (int)(ult_speed*1000);
+		speed_disp = (int)(ult_speed*dot_mask);
 		pthread_mutex_unlock(&lock_ult);
 		led_display(speed_disp);		
 	}
@@ -78,8 +79,9 @@ void *led_disp(void *arg)
 
 int main()
 {
-	float speed;
+	float speed,distance;
 	bool phflag=0;
+	bool firstflag = 1;
 	char buffer[100]={0};
 	int num_photos=0;
 	FILE *fp = NULL;
@@ -104,17 +106,20 @@ int main()
 		}
 		
 		if(speed > alarm_speed) {
-                        digitalWrite(ALARM, LOW);
-                        if(!phflag) {
-                                sprintf(buffer, "raspistill -t 200 -o /public/photos/photo-%d.jpeg -w 640 -h 480", num_photos++);
-				//system("raspistill -t 200 -o photo/$(date +%Y%m%d%H%M%S).jpg -w 640 -h 480");
-				system(buffer);
-                                phflag = 1;
-                        }
-                }
-                else {
+			if(firstflag) {
+				firstflag = 0;
+			} else {
+                        	digitalWrite(ALARM, LOW);
+                        	if(!phflag) {
+                                	sprintf(buffer, "raspistill -t 200 -o /public/photos/photo-%d.jpeg -w 640 -h 480", num_photos++);
+					system(buffer);
+                                	phflag = 1;
+                        	}
+			}
+                } else {
                         digitalWrite(ALARM, HIGH);
                         phflag = 0;
+			firstflag = 1;
                 }
 		
 		fp=fopen("/tmp/ult.log", "w");
