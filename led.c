@@ -29,18 +29,15 @@ void led_out(uchar data)
 void led_display(int ult_speed)
 {
 	int i;
-	for(i=0; i<3; i++) {
-		led_out(led_tab[ult_speed%10]);
+	for(i=0; i<4; i++) {
+		if(i-DOTMASK)
+			led_out(led_tab[ult_speed%10]);
+		else
+			led_out(led_tab[ult_speed%10] & 0x7f);
 		led_out(led_pos[i]);
 		ult_speed /= 10;
 		digitalWrite(RCLK, LOW);
 		digitalWrite(RCLK, HIGH);
 		digitalWrite(RCLK, LOW);
 	}
-	led_out(led_tab[ult_speed%10] & 0x7f);
-	led_out(led_pos[i]);
-	ult_speed /= 10;
-	digitalWrite(RCLK, LOW);
-	digitalWrite(RCLK, HIGH);
-	digitalWrite(RCLK, LOW);
 }
